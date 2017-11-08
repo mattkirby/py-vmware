@@ -32,8 +32,16 @@ def build_arg_parser():
     -p optional_password
 
     """
-    parser = argparse.ArgumentParser(
-        description='Standard Arguments for talking to vCenter')
+    import configargparse as cap
+    parser = cap.ArgParser(default_config_files=['./env.py.list'],
+        description='Arguments for talking to vCenter')
+    # parser = argparse.ArgumentParser(
+    #     description='Standard Arguments for talking to vCenter')
+
+    parser.add_argument('-c', '--my-config',
+                        required=True,
+                        is_config_file=True,
+                        help='config file path')
 
     # because -h is reserved for 'help' we use -s for service
     parser.add_argument('-s', '--host',
@@ -57,6 +65,20 @@ def build_arg_parser():
                         required=False,
                         action='store',
                         help='Password to use when connecting to host')
+
+    parser.add_argument('--insecure',
+                        required=False,
+                        action='store_true',
+                        help='disable ssl validation')
+
+    parser.add_argument('--datacenter-name',
+                        required=False,
+                        action='store',
+                        default=None,
+                        help='Name of the Datacenter you\
+                            wish to use. If omitted, the first\
+                            datacenter will be used.')
+
     return parser
 
 
