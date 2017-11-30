@@ -20,7 +20,7 @@ def wait_for_task(task):
             return task.info.result
 
         if task.info.state == 'error':
-            print "there was an error - {}".format(task.info.error.msg)
+            print("there was an error - {}".format(task.info.error.msg))
             task_done = True
 
 def get_obj(content, vimtype, name):
@@ -40,6 +40,7 @@ def get_obj(content, vimtype, name):
             obj = c
             break
 
+    print("- vmware_lib.get_obj: type: %s, name: %s, found: %s" % (vimtype[0], name, obj.name))
     return obj
 
 def migrate_vm(content, virtual_machine, rebalance, limit):
@@ -52,8 +53,8 @@ def migrate_vm(content, virtual_machine, rebalance, limit):
         if target_host_name == current_host_name:
             return "{} is already located on the optimal host.".format(vm.name)
         else:
-            print "Migrating {} from {} to {}".format(
-                vm.name, current_host_name, target_host_name)
+            print("Migrating {} from {} to {}".format(
+                vm.name, current_host_name, target_host_name))
             move_vm(vm, target)
             return True
     else:
@@ -116,25 +117,25 @@ def maintenance_mode(host, state):
     """
     if state:
         if not host.runtime.inMaintenanceMode:
-            print 'Placing {} into maintenance mode'.format(host.name)
+            print('Placing {} into maintenance mode'.format(host.name))
             wait_for_task(host.EnterMaintenanceMode(0))
         else:
-            print '{} is already in maintenance mode'.format(host.name)
+            print('{} is already in maintenance mode'.format(host.name))
     elif state == False:
         if host.runtime.inMaintenanceMode:
-            print 'Exiting maintenance mode'
+            print('Exiting maintenance mode')
             wait_for_task(host.ExitMaintenanceMode(0))
         else:
-            print '{} is not in maintenance mode'.format(host.name)
+            print('{} is not in maintenance mode'.format(host.name))
 
 def reconnect_host(host, user, pwd):
     """
     Reconnect a ESXi host to vcenter
     """
     if host.summary.runtime.connectionState == 'connected':
-        print '{} is already connected'.format(host.name)
+        print('{} is already connected'.format(host.name))
     elif host.summary.runtime.connectionState == 'disconnected':
-        print 'Reconnecting {}'.format(host.name)
+        print('Reconnecting {}'.format(host.name))
         connectspec = vim.host.ConnectSpec()
         connectspec.userName, connectspec.password = user, pwd
         wait_for_task(host.Reconnect(connectspec))
@@ -179,7 +180,7 @@ def migrate_host_vms(content, host, skip, rebalance, limit):
                 if not vm.name in skip:
                     migrate = migrate_vm(content, vm, rebalance, limit)
                     if isinstance(migrate, str):
-                        print ' '.join([migrate, 'Skipping remaining VMs.'])
+                        print(' '.join([migrate, 'Skipping remaining VMs.']))
                         break
                     else:
                         migrate_count = migrate_count + 1
@@ -187,14 +188,14 @@ def migrate_host_vms(content, host, skip, rebalance, limit):
                 migrate = migrate_vm(content, vm, rebalance, limit)
                 if isinstance(migrate, str):
                     if not migrate == 'vm not found':
-                        print ' '.join([migrate, 'Skipping remaining VMs.'])
+                        print(' '.join([migrate, 'Skipping remaining VMs.']))
                         break
                 else:
                     migrate_count = migrate_count + 1
         if migrate_count > 1:
-            print 'Successfully migrated {} vms from {}'.format(migrate_count, host.name)
+            print('Successfully migrated {} vms from {}'.format(migrate_count, host.name))
     else:
-        print 'No vms found on {}'.format(host.name)
+        print('No vms found on {}'.format(host.name))
 
 def mount_datastore(specification, host):
     try:
@@ -235,6 +236,6 @@ def migrate_vm_datastore(vm, datastore):
     # set relospec
     relospec = vim.vm.RelocateSpec()
     relospec.datastore = datastore
-    print "Migrating {} to {}...".format(vm.name, datastore.name)
+    print("Migrating {} to {}...".format(vm.name, datastore.name))
     task = vm.Relocate(spec=relospec)
     wait_for_task(task)
