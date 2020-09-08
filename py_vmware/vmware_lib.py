@@ -115,10 +115,12 @@ def maintenance_mode(host, state):
     Enter a host into maintenance mode
     """
     if state:
-        if not host.runtime.inMaintenanceMode:
+        if host.runtime.inMaintenanceMode == False:
             print 'Placing {} into maintenance mode'.format(host.name)
             host.EnterMaintenanceMode(10)
-            print 'Made it past enter maintenance mode'
+            time.sleep(10)
+            if host.runtime.inMaintenanceMode == False:
+                raise RuntimeError('Failed to enter maintenance mode')
         else:
             print '{} is already in maintenance mode'.format(host.name)
     elif state == False:
