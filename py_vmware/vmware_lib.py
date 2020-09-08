@@ -8,6 +8,7 @@ import atexit
 import vmutils
 import ssl
 import sys
+import time
 
 def str2bool(v):
     return str(v.lower()) in ("yes", "true", "t", "1")
@@ -120,6 +121,7 @@ def maintenance_mode(host, state):
             host.EnterMaintenanceMode(10)
             time.sleep(10)
             if host.runtime.inMaintenanceMode == False:
+                print 'Failed to place host into maintenance mode'
                 raise RuntimeError('Failed to enter maintenance mode')
         else:
             print '{} is already in maintenance mode'.format(host.name)

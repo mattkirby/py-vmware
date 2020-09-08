@@ -83,6 +83,12 @@ def get_args():
                         type='bool',
                         help='Limit host selection on hard resource constraints')
 
+    parser.add_argument('--attempts',
+                        action='store',
+                        type=int,
+                        default=5,
+                        help='Number of times to attempt the task')
+
     parser.add_argument('-e', '--esxi_host', action='store', help='host to migrate VMs from')
     parser.add_argument('-v', '--vm', action='store', help='name of vm to migrate')
     parser.add_argument('-c', '--cluster', action='store', help='Target cluster')
@@ -92,58 +98,54 @@ def get_args():
     args = parser.parse_args()
     return args
 
-def retry(fun, max_tries=5):
-    for i in range(max_tries):
-        try:
-           time.sleep(0.3)
-           fun()
-           break
-        except Exception:
-            continue
-
 def main():
     """
     Let this thing fly
     """
     args = get_args()
+    for i in range(args.attempts):
+        try:
 
-    # connect this thing
-    si = vmware_lib.connect(args.host, args.user, args.password, args.port, args.insecure)
-    content = si.RetrieveContent()
+            # connect this thing
+            si = vmware_lib.connect(args.host, args.user, args.password, args.port, args.insecure)
+            content = si.RetrieveContent()
 
-    if args.vm:
-        if args.cold_migrate:
-            vm = vmware_lib.get_obj(content, [vmware_lib.vim.VirtualMachine], args.vm)
-            if vm.runtime.powerState == 'poweredOn':
-                print 'Powering off {}'.format(args.vm)
-                task = vm.PowerOffVM_Task()
-                tasks.wait_for_tasks(si, [task])
+            if args.vm:
+                if args.cold_migrate:
+                    vm = vmware_lib.get_obj(content, [vmware_lib.vim.VirtualMachine], args.vm)
+                    if vm.runtime.powerState == 'poweredOn':
+                        print 'Powering off {}'.format(args.vm)
+                        task = vm.PowerOffVM_Task()
+                        tasks.wait_for_tasks(si, [task])
 
-        print 'Migrating VM'
-        result = vmware_lib.migrate_vm(content, args.vm, rebalance=False, limit=90)
-        if args.cold_migrate:
-            print 'Powering on VM'
-            task = vm.PowerOnVM_Task()
-            tasks.wait_for_tasks(si, [task])
-        return result
+                print 'Migrating VM'
+                result = vmware_lib.migrate_vm(content, args.vm, rebalance=False, limit=90)
+                if args.cold_migrate:
+                    print 'Powering on VM'
+                    task = vm.PowerOnVM_Task()
+                    tasks.wait_for_tasks(si, [task])
+                return result
 
-    if args.esxi_host:
-        host = vmware_lib.get_obj(content, [vmware_lib.vim.HostSystem], args.esxi_host)
-        if host:
-            if args.migrate_vms:
-                vmware_lib.migrate_host_vms(content, host, args.skip, args.rebalance, args.limit)
+            if args.esxi_host:
+                host = vmware_lib.get_obj(content, [vmware_lib.vim.HostSystem], args.esxi_host)
+                if host:
+                    if args.migrate_vms:
+                        vmware_lib.migrate_host_vms(content, host, args.skip, args.rebalance, args.limit)
 
-            if args.maintenance_mode or args.maintenance_mode == False:
-                vmware_lib.maintenance_mode(host, args.maintenance_mode)
-            if args.reboot:
-                print 'Rebooting {}'.format(host.name)
-                vmware_lib.wait_for_task(host.Reboot(force=False))
-            if args.reconnect:
-                vmware_lib.reconnect_host(host, args.host_user, args.host_password)
-        else:
-            print 'Cannot find host {}'.format(args.esxi_host)
-            sys.exit(1)
+                    if args.maintenance_mode or args.maintenance_mode == False:
+                        vmware_lib.maintenance_mode(host, args.maintenance_mode)
+                    if args.reboot:
+                        print 'Rebooting {}'.format(host.name)
+                        vmware_lib.wait_for_task(host.Reboot(force=False))
+                    if args.reconnect:
+                        vmware_lib.reconnect_host(host, args.host_user, args.host_password)
+                else:
+                    print 'Cannot find host {}'.format(args.esxi_host)
+                    sys.exit(1)
+            break
+        except RuntimeError:
+            continue
 
 # start this thing
 if __name__ == "__main__":
-    retry(main())
+    main()
