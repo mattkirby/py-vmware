@@ -95,7 +95,7 @@ def get_args():
 def retry(fun, max_tries=5):
     for i in range(max_tries):
         try:
-           time.sleep(0.3) 
+           time.sleep(0.3)
            fun()
            break
         except Exception:
@@ -146,4 +146,4 @@ def main():
 
 # start this thing
 if __name__ == "__main__":
-    rety(main())
+    retry(main())
