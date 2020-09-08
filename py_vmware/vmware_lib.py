@@ -117,13 +117,13 @@ def maintenance_mode(host, state):
     if state:
         if not host.runtime.inMaintenanceMode:
             print 'Placing {} into maintenance mode'.format(host.name)
-            wait_for_task(host.EnterMaintenanceMode(0))
+            wait_for_task(host.EnterMaintenanceMode(10))
         else:
             print '{} is already in maintenance mode'.format(host.name)
     elif state == False:
         if host.runtime.inMaintenanceMode:
             print 'Exiting maintenance mode'
-            wait_for_task(host.ExitMaintenanceMode(0))
+            wait_for_task(host.ExitMaintenanceMode(10))
         else:
             print '{} is not in maintenance mode'.format(host.name)
 

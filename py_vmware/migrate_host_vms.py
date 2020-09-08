@@ -3,6 +3,7 @@
 import argparse
 import py_vmware.vmware_lib as vmware_lib
 import sys
+import time
 from tools import tasks
 
 
@@ -91,6 +92,15 @@ def get_args():
     args = parser.parse_args()
     return args
 
+def retry(fun, max_tries=5):
+    for i in range(max_tries):
+        try:
+           time.sleep(0.3) 
+           fun()
+           break
+        except Exception:
+            continue
+
 def main():
     """
     Let this thing fly
@@ -136,4 +146,4 @@ def main():
 
 # start this thing
 if __name__ == "__main__":
-    main()
+    rety(main())
