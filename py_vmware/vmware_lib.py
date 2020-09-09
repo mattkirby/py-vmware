@@ -111,7 +111,7 @@ def find_target_host(vm, content, rebalance, cpu_limit=75, memory_limit=80, limi
     except:
         return False
 
-def maintenance_mode(host, state):
+def maintenance_mode(host, state, attempts):
     """
     Enter a host into maintenance mode
     """
@@ -121,7 +121,10 @@ def maintenance_mode(host, state):
             host.EnterMaintenanceMode(10)
             time.sleep(10)
             if host.runtime.inMaintenanceMode == False:
-                print 'Failed to place host into maintenance mode'
+                if attempts > 0:
+                    print 'Failed to place host into maintenance mode, will retry {} more times'.format(attempts)
+                else:
+                    print 'Failed to place host into maintenance mode, giving up'
                 raise RuntimeError('Failed to enter maintenance mode')
         else:
             print '{} is already in maintenance mode'.format(host.name)

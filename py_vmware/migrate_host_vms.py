@@ -86,7 +86,7 @@ def get_args():
     parser.add_argument('--attempts',
                         action='store',
                         type=int,
-                        default=5,
+                        default=3,
                         help='Number of times to attempt the task')
 
     parser.add_argument('-e', '--esxi_host', action='store', help='host to migrate VMs from')
@@ -103,6 +103,7 @@ def main():
     Let this thing fly
     """
     args = get_args()
+    attempts_left = args.attempts - 1
     for i in range(args.attempts):
         try:
 
@@ -133,7 +134,7 @@ def main():
                         vmware_lib.migrate_host_vms(content, host, args.skip, args.rebalance, args.limit)
 
                     if args.maintenance_mode or args.maintenance_mode == False:
-                        vmware_lib.maintenance_mode(host, args.maintenance_mode)
+                        vmware_lib.maintenance_mode(host, args.maintenance_mode, attempts_left)
                     if args.reboot:
                         print 'Rebooting {}'.format(host.name)
                         vmware_lib.wait_for_task(host.Reboot(force=False))
@@ -144,6 +145,7 @@ def main():
                     sys.exit(1)
             break
         except RuntimeError:
+            attempts_left -= 1
             continue
 
 # start this thing
