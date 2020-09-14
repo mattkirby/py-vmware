@@ -8,6 +8,7 @@ import atexit
 import vmutils
 import ssl
 import sys
+import time
 
 def str2bool(v):
     return str(v.lower()) in ("yes", "true", "t", "1")
@@ -110,20 +111,27 @@ def find_target_host(vm, content, rebalance, cpu_limit=75, memory_limit=80, limi
     except:
         return False
 
-def maintenance_mode(host, state):
+def maintenance_mode(host, state, attempts):
     """
     Enter a host into maintenance mode
     """
     if state:
-        if not host.runtime.inMaintenanceMode:
+        if host.runtime.inMaintenanceMode == False:
             print 'Placing {} into maintenance mode'.format(host.name)
-            wait_for_task(host.EnterMaintenanceMode(0))
+            host.EnterMaintenanceMode(10)
+            time.sleep(10)
+            if host.runtime.inMaintenanceMode == False:
+                if attempts > 0:
+                    print 'Failed to place host into maintenance mode, will retry {} more times'.format(attempts)
+                else:
+                    print 'Failed to place host into maintenance mode, giving up'
+                raise RuntimeError('Failed to enter maintenance mode')
         else:
             print '{} is already in maintenance mode'.format(host.name)
     elif state == False:
         if host.runtime.inMaintenanceMode:
             print 'Exiting maintenance mode'
-            wait_for_task(host.ExitMaintenanceMode(0))
+            host.ExitMaintenanceMode(10)
         else:
             print '{} is not in maintenance mode'.format(host.name)
 
